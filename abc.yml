@@ -1,0 +1,44 @@
+---
+ - name: Docker Installation and Docker image run
+   hosts: all
+   become: yes
+   tasks:
+      - name: Install dependencies for Docker
+        yum:
+          name:
+            - yum-utils
+            - device-mapper-persistent-data
+            - lvm2
+          state: present
+        when: ansible_facts.distribution == "RedHat"
+
+      - name: Add Docker repository
+        shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+        when: ansible_facts.distribution == "RedHat"
+
+      - name: Install Docker
+        yum:
+          name: docker-ce
+          state: present
+        when: ansible_facts.distribution == "RedHat"
+
+      - name: Start Docker service
+        service:
+          name: docker
+          state: started
+
+      - name: creating a folder for docker file
+        shell: mkdir /home/dockerimage
+
+      - name: Enable Docker service
+        service:
+          name: docker
+          enabled: yes
+
+      - name: copy our docker file for image run
+        copy:
+          src: ./Dockerfile
+          dest: /home/dockerimage/Dockerfile
+      
+      - name: run docker file
+        shell: docker image build -t /home/dockerimage/Dockerfile image:latest
